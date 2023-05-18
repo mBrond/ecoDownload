@@ -14,7 +14,7 @@ def main():
     # dataframePandas
     df_meta_flow = load.metadata_ana_flow(file=meta_flow)
 
-    basin = int(input("Código da bacia desejada: "))
+    basin = 75 #int(input("Código da bacia desejada: "))
 
     #filtra estações cuja SubBasin seja igual ao código do input
     # ex: 75 -> Bacia Uruguai
@@ -32,7 +32,12 @@ def main():
 
     mkdir(dir_flow)
 
-    downloadFlowData(stations_code=stations_code, path=current_path+'\\'+dir_flow)
+    try:
+        downloadFlowData(stations_code=stations_code, path=current_path+'\\'+dir_flow)
+    except Exception as e:
+        print(e)
+    else:
+        print("TRANQUILO")
 
     return
 def mkdir(path):
@@ -45,6 +50,9 @@ def mkdir(path):
         os.mkdir(path)
     except:
         print(path+' directory already exists')
+        for files in os.scandir(path):
+            os.remove(files.path)
+        print("Pre existing flow files have been deleted")
 
 
 def downloadPrecData(stations_code, path):
@@ -75,5 +83,4 @@ def downloadFlowData(stations_code, path):
         print('Arquivo salvo em: {}'.format(file_flow))
 
 if __name__ == '__main__':
-
     main()
