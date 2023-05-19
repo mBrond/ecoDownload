@@ -4,12 +4,14 @@ import os
 import shutil
 
 def main():
+    current_path = os.getcwd()
     dir_flow = 'flow_files'
+    dir_metadata = current_path+"\\metadata"
     # dir_prec = 'prec_files'
 
-    current_path = os.getcwd()
+    mkdir_del(dir_metadata)
 
-    meta_flow = download.metadata_ana_flow(folder=current_path+"\\metadata")
+    meta_flow = download.metadata_ana_flow(folder=dir_metadata)
 
     # dataframePandas
     df_meta_flow = load.metadata_ana_flow(file=meta_flow)
@@ -30,7 +32,7 @@ def main():
 
     stations_code = list(stations_code)
 
-    mkdir(dir_flow)
+    mkdir_del(dir_flow)
 
     try:
         downloadFlowData(stations_code=stations_code, path=current_path+'\\'+dir_flow)
@@ -40,9 +42,10 @@ def main():
         print("TRANQUILO")
 
     return
-def mkdir(path):
+def mkdir_del(path):
     """
     Creates a new directory with the specified name if it does not exist.
+    If it exists, all files inside it are deleted.
 
     :param path: string with path/dir name
     """
@@ -52,7 +55,7 @@ def mkdir(path):
         print(path+' directory already exists')
         for files in os.scandir(path):
             os.remove(files.path)
-        print("Pre existing flow files have been deleted")
+        print("Pre existing files in directory have been deleted")
 
 
 def downloadPrecData(stations_code, path):
@@ -83,4 +86,7 @@ def downloadFlowData(stations_code, path):
         print('Arquivo salvo em: {}'.format(file_flow))
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(e)
