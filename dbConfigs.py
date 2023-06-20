@@ -1,21 +1,50 @@
 import mysql.connector
 
-def main ():
-    db = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="root",
-        database="eco"
-    )
 
+def main():
+    db = mysql.connector.connect(host='localhost', user='root', password='root')
     cursor = db.cursor()
-
     try:
-        createTable(
+        create_database(cursor, 'eco')
+    except Exception as e:
+        print(e)
+
+
+    db = db_connection(host='localhost', user='root', password='root', database='eco')
+    cursor = db.cursor()
+    try:
+        inicialize_tables(cursor=cursor)
+    except Exception as e:
+        print(e)
+
+
+def db_connection(host: str, user: str, password: str, database: str):
+
+    db = mysql.connector.connect(
+        host=host,
+        user=user,
+        password=password,
+        database=database
+    )
+    return db
+
+
+def create_database(cursor: mysql.connector, database: str):
+    command = 'CREATE DATABASE %s' % database
+    cursor.execute(command)
+
+
+def inicialize_tables(cursor: mysql.connector):
+    """
+    Creates designed tables, if not exists:
+    SubBasin, FlowStations, MeasureFlow
+    """
+    try:
+        create_table(
             cursor,
             'SubBasin',
-            {'subBasinCod':'INT',
-             'name':'TEXT NOT NULL',
+            {'subBasinCod': 'INT',
+             'name': 'TEXT NOT NULL',
             },
             other_data=['PRIMARY KEY (subBasinCod)']
         )
@@ -23,13 +52,12 @@ def main ():
         print(e)
 
     try:
-        createTable(
+        create_table(
             cursor,
             'FlowStations',
             {'codStation': 'INT',
              'name': 'TEXT NOT NULL',
-             'subBasinCod': 'INT NOT NULL',
-             'consistencyLvl':'INT NOT NULL'
+             'subBasinCod': 'INT NOT NULL'
              }, other_data=['PRIMARY KEY (codStation)',
                            'FOREIGN KEY (subBasinCod) REFERENCES SubBasin(subBasinCod)']
         )
@@ -37,12 +65,12 @@ def main ():
         print(e)
 
     try:
-        createTable(
+        create_table(
             cursor,
             'MeasuresFlow',
-            {'date':'DATE',
-             'codStation':'INT',
-             'flow': 'DOUBLE'
+            {'date': 'DATE NOT NULL',
+             'codStation': 'INT',
+             'flow': 'FLOAT NOT NULL'
             },
             other_data=['PRIMARY KEY (date, codStation)',
                        'FOREIGN KEY (codStation) REFERENCES FlowStations(codStation)']
@@ -51,7 +79,7 @@ def main ():
         print(e)
 
 
-def createTable(cursor: mysql.connector, table: str, fields: dict, other_data: list):
+def create_table(cursor: mysql.connector, table: str, fields: dict, other_data: list):
 
     command = "CREATE TABLE %s (%s)" % (
         table,
@@ -60,11 +88,32 @@ def createTable(cursor: mysql.connector, table: str, fields: dict, other_data: l
     )
     cursor.execute(command)
 
-def insertRow(cursor: mysql.connector, table: str, tuples: list):
-    pass
+def insert_measuresflow(date: str, codstation: str, flow: str): ##WORKING ON IT, NOT CONCLUDED
+    db = db_connection(host='localhost', user='root', password='root', database='eco')
+    cursor = db.cursor()
 
-def selectRow(cursor: mysql.connector):
-    pass
+    command = 'INSERT INTO eco.measuresflow(date, codstation, flow) VALUES(%s, %s, %s)'
+    values = (date, codstation, flow)
+    cursor.execute(command, values)
+    db.commit()
+
+
+def insert_flowstations(codStation: str, name: str, subBasinCod: str):
+    db = db_connection(host='localhost', user='root', password='root', database='eco')
+    cursor = db.cursor()
+
+    command = 'INSERT INTO eco.flowstations(codStation, name, subBasinCod) VALUES(%s, %s, %s)'
+    values = (codStation, name, subBasinCod)
+    cursor.execute(command, values)
+    db.commit()
+
+def select_row(cursor: mysql.connector, column: str, database: str,table: str):
+    command = 'SELECT %s FROM %s.%s' % (column, database, table)
+    cursor.execute(command)
+    rows = cursor.fetchall()
+
+    return rows
+
 
 if __name__ == '__main__':
     main()
