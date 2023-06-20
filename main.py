@@ -5,7 +5,7 @@ import dbConfigs as dbc
 import mysql.connector
 from datetime import datetime
 def main():
-    # update_downloaded_data()
+    update_downloaded_data()
 
     update_flow_bd('75')
 
@@ -13,37 +13,28 @@ def update_flow_bd(subBasinCod):
     current_path = os.getcwd()
     flowFilesNames = os.listdir(current_path + "\\flow_files") #list
 
+    db = dbc.db_connection(host='localhost', user='root', password='root', database='eco')
+    cursor = db.cursor()
+
     i = 0
     for file in flowFilesNames:
-        df = pd.read_csv(current_path + "\\flow_files\\" + file)
-        serie = df.items()
         try:
             codStation = file[9:17]  # pronto
-            dbc.insert_flowstations(codStation=codStation, name='TESTE ' + str(i), subBasinCod=subBasinCod)
+            dbc.insert_flowstations(codStation=codStation, name='TESTE ' + str(i), subBasinCod=subBasinCod, cursor=cursor, db=db)
+            i = i + 1
         except Exception as e:
             print(e)
-        i = i + 1
-        for tuple in serie:
-            date, flow = date_flow(tuple)
-            if flow != "":
-                try:
-                    dbc.insert_measuresflow(date=date, codstation=codStation, flow=flow)
-                except Exception as e:
+        with open(current_path + "\\flow_files\\"+file, "r") as f:
+            i=0
+            for line in f:
+                date = line[0:10]
+                flow =line[11:].strip()
+                if flow != "":
+                    try:
+                        dbc.insert_measuresflow(date=date, codstation=codStation, flow=flow, cursor=cursor, db=db)
+                    except Exception as e:
+                        print(e)
 
-                    print(e)
-
-
-def date_flow(tuple: tuple):
-    """
-
-    """
-
-    serie1 = tuple[1]
-    string = serie1[0]
-    date = string[0:10]
-    flow = string[11:]
-
-    return date, flow
 
 def update_downloaded_data():
     current_path = os.getcwd()

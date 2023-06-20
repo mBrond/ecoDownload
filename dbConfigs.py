@@ -88,20 +88,14 @@ def create_table(cursor: mysql.connector, table: str, fields: dict, other_data: 
     )
     cursor.execute(command)
 
-def insert_measuresflow(date: str, codstation: str, flow: str): ##WORKING ON IT, NOT CONCLUDED
-    db = db_connection(host='localhost', user='root', password='root', database='eco')
-    cursor = db.cursor()
-
+def insert_measuresflow(cursor: mysql.connector,db, date: str, codstation: str, flow: str): ##WORKING ON IT, NOT CONCLUDED
     command = 'INSERT INTO eco.measuresflow(date, codstation, flow) VALUES(%s, %s, %s)'
     values = (date, codstation, flow)
     cursor.execute(command, values)
     db.commit()
 
 
-def insert_flowstations(codStation: str, name: str, subBasinCod: str):
-    db = db_connection(host='localhost', user='root', password='root', database='eco')
-    cursor = db.cursor()
-
+def insert_flowstations(cursor: mysql.connector, db, codStation: str, name: str, subBasinCod: str):
     command = 'INSERT INTO eco.flowstations(codStation, name, subBasinCod) VALUES(%s, %s, %s)'
     values = (codStation, name, subBasinCod)
     cursor.execute(command, values)
