@@ -80,6 +80,35 @@ def inicialize_tables(cursor: mysql.connector):
     except Exception as e:
         print(e)
 
+    try:
+        create_table(
+            cursor,
+            'PrecStations',
+            {'codStation': 'INT',
+             'name': 'TEXT NOT NULL',
+             'subBasinCod': 'INT NOT NULL',
+             'latitude': 'FLOAT NOT NULL',
+             'longitude': 'FLOAT NOT NULL'
+             }, other_data=['PRIMARY KEY (codStation)',
+                           'FOREIGN KEY (subBasinCod) REFERENCES SubBasin(subBasinCod)']
+        )
+    except Exception as e:
+        print(e)
+
+
+    try:
+        create_table(
+            cursor,
+            'MeasuresPrec',
+            {'date': 'DATE NOT NULL',
+             'codStation': 'INT NOT NULL',
+             'precipitation': 'FLOAT NOT NULL'
+            },
+            other_data=['PRIMARY KEY (date, codStation)',
+                        'FOREIGN KEY (codStation) REFERENCES PrecStations(codStation)']
+        )
+    except Exception as e:
+        print(e)
 
 def create_table(cursor: mysql.connector, table: str, fields: dict, other_data: list):
 
