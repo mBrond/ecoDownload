@@ -1,13 +1,14 @@
-import pandas as pd
 from gespla import download, load
 import os
 import dbConfigs as dbc
-import mysql.connector
-from datetime import datetime
-def main():
-    update_downloaded_data()
 
-    update_flow_bd('75')
+def main():
+    subBasinCode = 75 # Rio Uruguai
+
+
+    #update_downloaded_data(subBasinCode)
+    update_flow_bd(subBasinCode)
+
 
 def update_flow_bd(subBasinCod):
     current_path = os.getcwd()
@@ -16,12 +17,16 @@ def update_flow_bd(subBasinCod):
     db = dbc.db_connection(host='localhost', user='root', password='root', database='eco')
     cursor = db.cursor()
 
-    i = 0
     for file in flowFilesNames:
         try:
-            codStation = file[9:17]  # pronto
-            dbc.insert_flowstations(codStation=codStation, name='TESTE ' + str(i), subBasinCod=subBasinCod, cursor=cursor, db=db)
-            i = i + 1
+            codStation = file[9:17]
+            info = get_stations_info(codStation)
+            name = info['name']
+            lon = info['longitude']
+            lat = info['latitude']
+            dbc.insert_flowstations(codStation=codStation, name=name, subBasinCod=subBasinCod, latitude=lat,
+                                    longitude=lon, cursor=cursor, db=db)
+            print("Insertion of station "+codStation+" done.")
         except Exception as e:
             print(e)
         with open(current_path + "\\flow_files\\"+file, "r") as f:
@@ -36,7 +41,33 @@ def update_flow_bd(subBasinCod):
                         print(e)
 
 
-def update_downloaded_data():
+def get_stations_info(codStation: str):
+    current_path = os.getcwd()
+
+    dir_metadata = current_path + "\\metadata"
+
+    metadata_file = os.listdir(dir_metadata)[0] #retorna lista com 1 elemento -> nome do arquivo de metadata
+
+    df_meta_flow = load.metadata_ana_flow(file=dir_metadata+'\\'+metadata_file) #df do metadata
+
+    data = df_meta_flow.loc[df_meta_flow['CodEstacao']==str(codStation)] #data = df
+
+    # .loc retorna uma serie, .tolist converte para lista com um item
+    name = data.loc[:, 'Name'].tolist()[0]
+    lon = str(data.loc[:, 'Longitude'].tolist()[0])
+    lat = str(data.loc[:, 'Latitude'].tolist()[0])
+
+    info={
+        'name': name,
+        'longitude': lon,
+        'latitude': lat
+    }
+
+    return info
+
+
+
+def update_downloaded_data(subBasinCode: int):
     current_path = os.getcwd()
     dir_flow = 'flow_files'
     dir_metadata = current_path + "\\metadata"
@@ -49,11 +80,9 @@ def update_downloaded_data():
     # dataframePandas
     df_meta_flow = load.metadata_ana_flow(file=meta_flow)
 
-    basin = 75  # int(input("Código da bacia desejada: "))
-
-    # filtra estações cuja SubBasin seja igual ao código do input
+    # filtra estações cuja SubBasin seja igual ao código do parametro
     # ex: 75 -> Bacia Uruguai
-    list_stations = df_meta_flow.loc[df_meta_flow['SubBasin'] == basin]
+    list_stations = df_meta_flow.loc[df_meta_flow['SubBasin'] == subBasinCode]
 
     # separa os códigos das estações
     stations_code = list_stations.loc[:, "CodEstacao"]

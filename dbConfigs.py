@@ -57,7 +57,9 @@ def inicialize_tables(cursor: mysql.connector):
             'FlowStations',
             {'codStation': 'INT',
              'name': 'TEXT NOT NULL',
-             'subBasinCod': 'INT NOT NULL'
+             'subBasinCod': 'INT NOT NULL',
+             'latitude': 'FLOAT NOT NULL',
+             'longitude': 'FLOAT NOT NULL'
              }, other_data=['PRIMARY KEY (codStation)',
                            'FOREIGN KEY (subBasinCod) REFERENCES SubBasin(subBasinCod)']
         )
@@ -95,11 +97,12 @@ def insert_measuresflow(cursor: mysql.connector,db, date: str, codstation: str, 
     db.commit()
 
 
-def insert_flowstations(cursor: mysql.connector, db, codStation: str, name: str, subBasinCod: str):
-    command = 'INSERT INTO eco.flowstations(codStation, name, subBasinCod) VALUES(%s, %s, %s)'
-    values = (codStation, name, subBasinCod)
+def insert_flowstations(cursor: mysql.connector, db, codStation: str, name: str, subBasinCod: str, latitude: str, longitude: str):
+    command = 'INSERT INTO eco.flowstations(codStation, name, subBasinCod, latitude, longitude) VALUES(%s, %s, %s, %s, %s)'
+    values = (codStation, name, subBasinCod, latitude, longitude)
     cursor.execute(command, values)
     db.commit()
+
 
 def select_row(cursor: mysql.connector, column: str, database: str,table: str):
     command = 'SELECT %s FROM %s.%s' % (column, database, table)
