@@ -119,12 +119,24 @@ def create_table(cursor: mysql.connector, table: str, fields: dict, other_data: 
     )
     cursor.execute(command)
 
-def insert_measuresflow(cursor: mysql.connector,db, date: str, codstation: str, flow: str): ##WORKING ON IT, NOT CONCLUDED
+def insert_measuresflow(cursor: mysql.connector,db, date: str, codstation: str, flow: str):
     command = 'INSERT INTO eco.measuresflow(date, codstation, flow) VALUES(%s, %s, %s)'
     values = (date, codstation, flow)
     cursor.execute(command, values)
     db.commit()
 
+def insert_measuresprec(cursor: mysql.connector,db, date: str, codstation: str, flow: str):
+    command = 'INSERT INTO eco.measuresprec(date, codstation, flow) VALUES(%s, %s, %s)'
+    values = (date, codstation, flow)
+    cursor.execute(command, values)
+    db.commit()
+
+
+def insert_precstations(cursor: mysql.connector, db, codStation: str, name: str, subBasinCod: str, latitude: str, longitude: str):
+    command = 'INSERT INTO eco.precstations(codStation, name, subBasinCod, latitude, longitude) VALUES(%s, %s, %s, %s, %s)'
+    values = (codStation, name, subBasinCod, latitude, longitude)
+    cursor.execute(command, values)
+    db.commit()
 
 def insert_flowstations(cursor: mysql.connector, db, codStation: str, name: str, subBasinCod: str, latitude: str, longitude: str):
     command = 'INSERT INTO eco.flowstations(codStation, name, subBasinCod, latitude, longitude) VALUES(%s, %s, %s, %s, %s)'

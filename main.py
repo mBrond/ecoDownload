@@ -5,9 +5,13 @@ import dbConfigs as dbc
 def main():
     subBasinCode = 75 # Rio Uruguai
 
+    update_prec_downloaded_data(subBasinCode)
 
-    #update_downloaded_data(subBasinCode)
-    update_flow_bd(subBasinCode)
+    #update_flow_downloaded_data(subBasinCode)
+    #update_flow_bd(subBasinCode)
+
+    update_prec_downloaded_data(subBasinCode)
+    update_prec_bd(subBasinCode)
 
 
 def update_flow_bd(subBasinCod):
@@ -36,10 +40,39 @@ def update_flow_bd(subBasinCod):
                 flow =line[11:].strip()
                 if flow != "":
                     try:
-                        dbc.insert_measuresflow(date=date, codstation=codStation, flow=flow, cursor=cursor, db=db)
+                        dbc.insert_measuresflow(date=date, codstation=str(codStation), flow=flow, cursor=cursor, db=db)
                     except Exception as e:
                         print(e)
 
+def update_prec_bd(subBasinCod: int):
+    current_path = os.getcwd()
+    precFilesNames = os.listdir(current_path + "\\prec_files") #list
+
+    db = dbc.db_connection(host='localhost', user='root', password='root', database='eco')
+    cursor = db.cursor()
+
+    for file in precFilesNames:
+        try:
+            codStation = file[9:17]
+            info = get_stations_info(codStation)
+            name = info['name']
+            lon = info['longitude']
+            lat = info['latitude']
+            dbc.insert_precstations(codStation=codStation, name=name, subBasinCod=str(subBasinCod), latitude=lat,
+                                    longitude=lon, cursor=cursor, db=db)
+            print("Insertion of station "+codStation+" done.")
+        except Exception as e:
+            print(e)
+        with open(current_path + "\\flow_files\\"+file, "r") as f:
+            i=0
+            for line in f:
+                date = line[0:10]
+                flow =line[11:].strip()
+                if flow != "":
+                    try:
+                        dbc.insert_measuresprec(date=date, codstation=codStation, flow=flow, cursor=cursor, db=db)
+                    except Exception as e:
+                        print(e)
 
 def get_stations_info(codStation: str):
     current_path = os.getcwd()
@@ -66,12 +99,42 @@ def get_stations_info(codStation: str):
     return info
 
 
+def update_prec_downloaded_data(subBasinCode: int):
+    current_path = os.getcwd()
+    dir_metadata = current_path + "\\metadata\\meta_prec"
+    dir_prec = 'prec_files'
 
-def update_downloaded_data(subBasinCode: int):
+    mkdir_del(dir_metadata)
+
+    meta_prec = download.metadata_ana_prec(folder=dir_metadata)
+
+    # dataframePandas
+    df_meta_prec = load.metadata_ana_flow(file=meta_prec)
+    list_prec_stations = df_meta_prec.loc[df_meta_prec['SubBasin'] == subBasinCode]
+
+    stations_code = list_prec_stations.loc[:, "CodEstacao"]
+    stations_code = list(stations_code)
+
+
+    if list_prec_stations.empty:
+        print("Nenhuma estação encontrada para o código de bacia digitado (Precipitação)\nAbortando programa")
+        return
+
+    mkdir_del(dir_prec)
+
+    try:
+        download_prec_data(stations_code=stations_code, path=current_path + '\\' + dir_flow)
+    except Exception as e:
+        print(e)
+    else:
+        print("TRANQUILO")
+
+
+def update_flow_downloaded_data(subBasinCode: int):
     current_path = os.getcwd()
     dir_flow = 'flow_files'
-    dir_metadata = current_path + "\\metadata"
-    # dir_prec = 'prec_files'
+    dir_metadata = current_path + "\\metadata\\meta_flow"
+    dir_prec = 'prec_files'
 
     mkdir_del(dir_metadata)
 
@@ -82,13 +145,13 @@ def update_downloaded_data(subBasinCode: int):
 
     # filtra estações cuja SubBasin seja igual ao código do parametro
     # ex: 75 -> Bacia Uruguai
-    list_stations = df_meta_flow.loc[df_meta_flow['SubBasin'] == subBasinCode]
+    list_flow_stations = df_meta_flow.loc[df_meta_flow['SubBasin'] == subBasinCode]
 
     # separa os códigos das estações
-    stations_code = list_stations.loc[:, "CodEstacao"]
+    stations_code = list_flow_stations.loc[:, "CodEstacao"]
 
-    if list_stations.empty:
-        print("Nenhuma estação encontrada para o código de bacia digitado\nAbortando programa")
+    if list_flow_stations.empty:
+        print("Nenhuma estação encontrada para o código de bacia digitado (Vazão)\nAbortando programa")
         return
 
     stations_code = list(stations_code)
@@ -101,6 +164,8 @@ def update_downloaded_data(subBasinCode: int):
         print(e)
     else:
         print("TRANQUILO")
+
+
 
 
 def mkdir_del(path: str):
@@ -119,7 +184,7 @@ def mkdir_del(path: str):
         print("Pre existing files in directory have been deleted")
 
 
-def downloadPrecData(stations_code: list, path: str):
+def download_prec_data(stations_code: list, path: str):
     """
     Downloads all precipitaiton information from the stations specified
 
