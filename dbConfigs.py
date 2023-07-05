@@ -125,9 +125,9 @@ def insert_measuresflow(cursor: mysql.connector,db, date: str, codstation: str, 
     cursor.execute(command, values)
     db.commit()
 
-def insert_measuresprec(cursor: mysql.connector,db, date: str, codstation: str, flow: str):
-    command = 'INSERT INTO eco.measuresprec(date, codstation, flow) VALUES(%s, %s, %s)'
-    values = (date, codstation, flow)
+def insert_measuresprec(cursor: mysql.connector,db, date: str, codstation: str, precipitation: str):
+    command = 'INSERT INTO eco.measuresprec(date, codstation, precipitation) VALUES(%s, %s, %s)'
+    values = (date, codstation, precipitation)
     cursor.execute(command, values)
     db.commit()
 

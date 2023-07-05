@@ -5,13 +5,17 @@ import dbConfigs as dbc
 def main():
     subBasinCode = 75 # Rio Uruguai
 
-    update_prec_downloaded_data(subBasinCode)
+    try:
+        update_prec_downloaded_data(subBasinCode)
+        update_prec_bd(subBasinCode)
+    except Exception as e:
+        print(e)
 
-    #update_flow_downloaded_data(subBasinCode)
-    #update_flow_bd(subBasinCode)
-
-    update_prec_downloaded_data(subBasinCode)
-    update_prec_bd(subBasinCode)
+    try:
+        update_flow_downloaded_data(subBasinCode)
+        update_flow_bd(subBasinCode)
+    except Exception as e:
+        print(e)
 
 
 def update_flow_bd(subBasinCod):
@@ -24,7 +28,7 @@ def update_flow_bd(subBasinCod):
     for file in flowFilesNames:
         try:
             codStation = file[9:17]
-            info = get_stations_info(codStation)
+            info = get_flow_stations_info(codStation)
             name = info['name']
             lon = info['longitude']
             lat = info['latitude']
@@ -44,6 +48,7 @@ def update_flow_bd(subBasinCod):
                     except Exception as e:
                         print(e)
 
+
 def update_prec_bd(subBasinCod: int):
     current_path = os.getcwd()
     precFilesNames = os.listdir(current_path + "\\prec_files") #list
@@ -54,7 +59,7 @@ def update_prec_bd(subBasinCod: int):
     for file in precFilesNames:
         try:
             codStation = file[9:17]
-            info = get_stations_info(codStation)
+            info = get_prec_stations_info(codStation)
             name = info['name']
             lon = info['longitude']
             lat = info['latitude']
@@ -63,21 +68,46 @@ def update_prec_bd(subBasinCod: int):
             print("Insertion of station "+codStation+" done.")
         except Exception as e:
             print(e)
-        with open(current_path + "\\flow_files\\"+file, "r") as f:
-            i=0
+        with open(current_path + "\\prec_files\\"+file, "r") as f:
             for line in f:
                 date = line[0:10]
-                flow =line[11:].strip()
-                if flow != "":
+                precipitation =line[11:].strip()
+                if precipitation != "":
                     try:
-                        dbc.insert_measuresprec(date=date, codstation=codStation, flow=flow, cursor=cursor, db=db)
+                        dbc.insert_measuresprec(date=date, codstation=codStation, precipitation=precipitation, cursor=cursor, db=db)
                     except Exception as e:
                         print(e)
 
-def get_stations_info(codStation: str):
+
+def get_prec_stations_info(codStation: str):
     current_path = os.getcwd()
 
-    dir_metadata = current_path + "\\metadata"
+    dir_metadata = current_path + "\\metadata\\meta_prec"
+
+    metadata_file = os.listdir(dir_metadata)[0] #retorna lista com 1 elemento -> nome do arquivo de metadata
+
+    df_meta_prec = load.metadata_ana_prec(file=dir_metadata+'\\'+metadata_file) #df do metadata
+
+    data = df_meta_prec.loc[df_meta_prec['CodEstacao']==str(codStation)] #data = df
+
+    # .loc retorna uma serie, .tolist converte para lista com um item
+    name = data.loc[:, 'Name'].tolist()[0]
+    lon = str(data.loc[:, 'Longitude'].tolist()[0])
+    lat = str(data.loc[:, 'Latitude'].tolist()[0])
+
+    info={
+        'name': name,
+        'longitude': lon,
+        'latitude': lat
+    }
+
+    return info
+
+
+def get_flow_stations_info(codStation: str):
+    current_path = os.getcwd()
+
+    dir_metadata = current_path + "\\metadata\\meta_flow"
 
     metadata_file = os.listdir(dir_metadata)[0] #retorna lista com 1 elemento -> nome do arquivo de metadata
 
@@ -115,7 +145,6 @@ def update_prec_downloaded_data(subBasinCode: int):
     stations_code = list_prec_stations.loc[:, "CodEstacao"]
     stations_code = list(stations_code)
 
-
     if list_prec_stations.empty:
         print("Nenhuma estação encontrada para o código de bacia digitado (Precipitação)\nAbortando programa")
         return
@@ -123,11 +152,9 @@ def update_prec_downloaded_data(subBasinCode: int):
     mkdir_del(dir_prec)
 
     try:
-        download_prec_data(stations_code=stations_code, path=current_path + '\\' + dir_flow)
+        download_prec_data(stations_code=stations_code, path=current_path + '\\' + dir_prec)
     except Exception as e:
         print(e)
-    else:
-        print("TRANQUILO")
 
 
 def update_flow_downloaded_data(subBasinCode: int):
@@ -162,10 +189,6 @@ def update_flow_downloaded_data(subBasinCode: int):
         download_flow_data(stations_code=stations_code, path=current_path + '\\' + dir_flow)
     except Exception as e:
         print(e)
-    else:
-        print("TRANQUILO")
-
-
 
 
 def mkdir_del(path: str):
