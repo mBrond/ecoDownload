@@ -3,7 +3,11 @@ import dbConfigs as dbc
 
 def write_line(filePath: str, data: dict):
     file = open(filePath, "a")
-    line = str(data["cod"])+";"+data["name"]+";"+str(data["lat"])+";"+str(data["lon"])+"\n"
+    line = str()
+    for key in data:
+        line = line + str(data[key]) + ";"
+
+    line = line+"\n"
     file.write(line)
 
 
@@ -32,10 +36,10 @@ def flowStationCSV(current_path: str):
     data = getData("*", "eco", "flowStations")
     info = dict()
     for item in data:
+        info["cod"] = item[0]
         info["name"] = item[1]
         info["lat"] = item[3]
         info["lon"] = item[4]
-        info["cod"] = item[0]
         write_line(path, info)
 
 
@@ -56,13 +60,13 @@ def flowMeasuresCSV(current_path: str):
     info = dict()
     for item in data:
         info["date"] = item[0]
-        info["codStation"] = item[1]
+        info["cod"] = item[1]
         info["flow"] = item[2]
-
+        write_line(path, info)
 def main():
 
     current_path = os.getcwd()
-    flowStationCSV(current_path)
+    #flowStationCSV(current_path)
     flowMeasuresCSV(current_path)
 
 if __name__ == '__main__':
