@@ -2,6 +2,12 @@ import os
 import dbConfigs as dbc
 
 def write_line(filePath: str, data: dict):
+    """
+    :param filePath: path to file and file name/extension
+    :param data: dict in order of data to be written
+
+    """
+
     file = open(filePath, "a")
     line = str()
     for key in data:
@@ -24,27 +30,16 @@ def getData(column: str, database: str,table: str):
     cursor = db.cursor()
     return dbc.select_row(cursor, column=column, database=database, table=table)
 
-def flowStationCSV(current_path: str):
 
-    path = current_path+"\\flowstations.csv"
-    os.remove(path)
-    try:
-        create_file(path, collumns=["codStation", "name", "latitude", "longitude"])
-    except Exception as e:
-        print(e)
+def measuresCSV(current_path: str, type: str):
+    """
+    :param current_path: directory where .csv will be saved
+    :param type: only prec (preciptation) or flow
+    """
 
-    data = getData("*", "eco", "flowStations")
-    info = dict()
-    for item in data:
-        info["cod"] = item[0]
-        info["name"] = item[1]
-        info["lat"] = item[3]
-        info["lon"] = item[4]
-        write_line(path, info)
-
-
-def flowMeasuresCSV(current_path: str):
-    path = current_path + "\\measuresflow.csv"
+    if type != 'flow' and type != 'prec':
+        raise Exception("Type not supported")
+    path = current_path + "\\"+"measures"+type+".csv"
     try:
         os.remove(path)
     except Exception as e:
@@ -55,7 +50,7 @@ def flowMeasuresCSV(current_path: str):
     except Exception as e:
         print(e)
 
-    data = getData("*", "eco", "measuresflow")
+    data = getData("*", "eco", "measures"+type)
 
     info = dict()
     for item in data:
@@ -63,11 +58,47 @@ def flowMeasuresCSV(current_path: str):
         info["cod"] = item[1]
         info["flow"] = item[2]
         write_line(path, info)
+
+
+def stationCSV(current_path: str, type: str):
+    """
+    :param current_path: directory where .csv will be saved
+    :param type: only prec (preciptation) or flow
+    """
+
+    if type != 'flow' and type != 'prec':
+        raise Exception("Type not supported")
+
+    try:
+        path = current_path+"\\"+type+"stations"+".csv"
+        os.remove(path)
+    except Exception as e:
+        print(e)
+    try:
+        create_file(path, collumns=["codStation", "name", "latitude", "longitude"])
+    except Exception as e:
+        print(e)
+
+    data = getData("*", "eco", type+"Stations")
+    info = dict()
+    for item in data:
+        info["cod"] = item[0]
+        info["name"] = item[1]
+        info["lat"] = item[3]
+        info["lon"] = item[4]
+        write_line(path, info)
+
+
 def main():
 
     current_path = os.getcwd()
-    #flowStationCSV(current_path)
-    flowMeasuresCSV(current_path)
+
+    measuresCSV(current_path, "flow")
+    measuresCSV(current_path, "prec")
+
+    stationCSV(current_path, type="flow")
+    stationCSV(current_path, type="prec")
+
 
 if __name__ == '__main__':
     main()
