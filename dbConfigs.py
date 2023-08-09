@@ -1,6 +1,4 @@
 import mysql.connector
-
-
 def main():
     db = mysql.connector.connect(host='localhost', user='root', password='root')
     cursor = db.cursor()
@@ -72,7 +70,7 @@ def inicialize_tables(cursor: mysql.connector):
             'MeasuresFlow',
             {'date': 'DATE NOT NULL',
              'codStation': 'INT',
-             'flow': 'FLOAT NOT NULL'
+             'flow': 'FLOAT'
             },
             other_data=['PRIMARY KEY (date, codStation)',
                        'FOREIGN KEY (codStation) REFERENCES FlowStations(codStation)']
@@ -102,7 +100,7 @@ def inicialize_tables(cursor: mysql.connector):
             'MeasuresPrec',
             {'date': 'DATE NOT NULL',
              'codStation': 'INT NOT NULL',
-             'precipitation': 'FLOAT NOT NULL'
+             'precipitation': 'FLOAT'
             },
             other_data=['PRIMARY KEY (date, codStation)',
                         'FOREIGN KEY (codStation) REFERENCES PrecStations(codStation)']

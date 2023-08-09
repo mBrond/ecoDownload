@@ -6,13 +6,13 @@ def main():
     subBasinCode = 75 # Rio Uruguai
 
     try:
-        update_prec_downloaded_data(subBasinCode)
+        #update_prec_downloaded_data(subBasinCode)
         update_prec_bd(subBasinCode)
     except Exception as e:
         print(e)
 
     try:
-        update_flow_downloaded_data(subBasinCode)
+        #update_flow_downloaded_data(subBasinCode)
         update_flow_bd(subBasinCode)
     except Exception as e:
         print(e)
@@ -73,10 +73,11 @@ def update_prec_bd(subBasinCod: int):
                 date = line[0:10]
                 precipitation =line[11:].strip()
                 if precipitation != "":
-                    try:
-                        dbc.insert_measuresprec(date=date, codstation=codStation, precipitation=precipitation, cursor=cursor, db=db)
-                    except Exception as e:
-                        print(e)
+                    precipitation = "NULL"
+                try:
+                    dbc.insert_measuresprec(date=date, codstation=codStation, precipitation=precipitation, cursor=cursor, db=db)
+                except Exception as e:
+                    print(e)
 
 
 def get_prec_stations_info(codStation: str):
@@ -134,9 +135,10 @@ def update_prec_downloaded_data(subBasinCode: int):
     dir_metadata = current_path + "\\metadata\\meta_prec"
     dir_prec = 'prec_files'
 
-    mkdir_del(dir_metadata)
+    # mkdir_del(dir_metadata)
 
     meta_prec = download.metadata_ana_prec(folder=dir_metadata)
+    # meta_prec = "C:\\Users\\migbr\\OneDrive\\Documentos\\Eco\\ecoDownload\\metadata\\meta_prec\\metadata_ANA-prec_2023-07-05.txt"
 
     # dataframePandas
     df_meta_prec = load.metadata_ana_flow(file=meta_prec)
@@ -163,7 +165,7 @@ def update_flow_downloaded_data(subBasinCode: int):
     dir_metadata = current_path + "\\metadata\\meta_flow"
     dir_prec = 'prec_files'
 
-    mkdir_del(dir_metadata)
+    # mkdir_del(dir_metadata)
 
     meta_flow = download.metadata_ana_flow(folder=dir_metadata)
 
