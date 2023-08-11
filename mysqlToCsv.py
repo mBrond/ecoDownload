@@ -39,7 +39,7 @@ def measuresCSV(current_path: str, type: str):
 
     if type != 'flow' and type != 'prec':
         raise Exception("Type not supported")
-    path = current_path + "\\"+"measures"+type+".csv"
+    path = current_path + "\\csv\\"+"measures"+type+".csv"
     try:
         os.remove(path)
     except Exception as e:
@@ -70,7 +70,7 @@ def stationCSV(current_path: str, type: str):
         raise Exception("Type not supported")
 
     try:
-        path = current_path+"\\"+type+"stations"+".csv"
+        path = current_path+"\\csv\\"+type+"stations"+".csv"
         os.remove(path)
     except Exception as e:
         print(e)
@@ -92,6 +92,11 @@ def stationCSV(current_path: str, type: str):
 def main():
 
     current_path = os.getcwd()
+
+    try:
+        os.mkdir("csv")
+    except Exception as e:
+        print(e)
 
     measuresCSV(current_path, "flow")
     measuresCSV(current_path, "prec")

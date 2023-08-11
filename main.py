@@ -1,21 +1,27 @@
 from gespla import download, load
 import os
 import dbConfigs as dbc
+import getDatas as gdt
 
 def main():
     subBasinCode = 75 # Rio Uruguai
 
-    try:
-        #update_prec_downloaded_data(subBasinCode)
-        update_prec_bd(subBasinCode)
-    except Exception as e:
-        print(e)
+    update_dowloaded_data(subBasinCode, 'prec')
+    update_bd(subBasinCode, 'prec')
 
-    try:
-        #update_flow_downloaded_data(subBasinCode)
-        update_flow_bd(subBasinCode)
-    except Exception as e:
-        print(e)
+    # try:
+    #     update_prec_downloaded_data(subBasinCode)
+    #     update_prec_bd(subBasinCode)
+    # except Exception as e:
+    #     print(e)
+
+    # try:
+        # update_dowloaded_data(subBasinCode, type='flow')
+        # update_flow_downloaded_data(subBasinCode)
+        # update_bd(subBasinCode, type='flow')
+        # update_flow_bd(subBasinCode)
+    # except Exception as e:
+    #     print(e)
 
 
 def update_flow_bd(subBasinCod):
@@ -47,6 +53,48 @@ def update_flow_bd(subBasinCod):
                         dbc.insert_measuresflow(date=date, codstation=str(codStation), flow=flow, cursor=cursor, db=db)
                     except Exception as e:
                         print(e)
+
+
+def update_bd(subBasinCod, type: str):
+    if type != 'flow' and type != 'prec':
+        raise Exception("Type not supported")
+
+    current_path = os.getcwd()
+    filesNames = os.listdir(current_path + "\\"+type+"_files")  # list
+
+    db = dbc.db_connection(host='localhost', user='root', password='root', database='eco')
+    cursor = db.cursor()
+
+    for file in filesNames:
+        try:
+            codStation = file[9:17]
+            info = gdt.get_stations_info(codStation=codStation, type=type)
+            name = info['name']
+            lon = info['longitude']
+            lat = info['latitude']
+            if type == 'flow':
+                dbc.insert_flowstations(codStation=codStation, name=name, subBasinCod=subBasinCod, latitude=lat,
+                                        longitude=lon, cursor=cursor, db=db)
+            elif type == 'prec':
+                dbc.insert_precstations(codStation=codStation, name=name, subBasinCod=str(subBasinCod), latitude=lat,
+                                        longitude=lon, cursor=cursor, db=db)
+            print("Insertion of station " + codStation + " done.")
+        except Exception as e:
+            print(e)
+        with open(current_path + "\\"+type+"_files\\" + file, "r") as f:
+            for line in f:
+                date = line[0:10]
+                measure = line[11:].strip()
+                if measure == "":
+                    measure = "NULL"
+                try:
+                    if type == 'flow':
+                        dbc.insert_measuresflow(date=date, codstation=str(codStation), flow=measure, cursor=cursor, db=db)
+                    else:
+                        dbc.insert_measuresprec(date=date, codstation=codStation, precipitation=measure,
+                                                cursor=cursor, db=db)
+                except Exception as e:
+                    print(e)
 
 
 def update_prec_bd(subBasinCod: int):
@@ -154,7 +202,7 @@ def update_prec_downloaded_data(subBasinCode: int):
     mkdir_del(dir_prec)
 
     try:
-        download_prec_data(stations_code=stations_code, path=current_path + '\\' + dir_prec)
+        download_data(stations_code=stations_code, path=current_path + '\\' + dir_prec, type='prec')
     except Exception as e:
         print(e)
 
@@ -166,8 +214,10 @@ def update_flow_downloaded_data(subBasinCode: int):
     dir_prec = 'prec_files'
 
     # mkdir_del(dir_metadata)
-
-    meta_flow = download.metadata_ana_flow(folder=dir_metadata)
+    try:
+        meta_flow = download.metadata_ana_flow(folder=dir_metadata)
+    except Exception as e:
+        print(e)
 
     # dataframePandas
     df_meta_flow = load.metadata_ana_flow(file=meta_flow)
@@ -188,9 +238,56 @@ def update_flow_downloaded_data(subBasinCode: int):
     mkdir_del(dir_flow)
 
     try:
-        download_flow_data(stations_code=stations_code, path=current_path + '\\' + dir_flow)
+        download_data(stations_code=stations_code, path=current_path + '\\' + dir_flow, type='flow')
     except Exception as e:
         print(e)
+
+
+
+def update_dowloaded_data(subBasinCod: int, type: str):
+    if type != 'flow' and type != 'prec':
+        raise Exception("Type not supported")
+
+    current_path = os.getcwd()
+    dir_metadata = current_path + "\\metadata\\meta_"+type
+    dir = type+'_files'
+
+    # mkdir_del(dir_metadata)
+    try:
+        if type == 'flow':
+            meta_file = download.metadata_ana_flow(folder=dir_metadata)
+        else:
+            meta_file = download.metadata_ana_prec(folder=dir_metadata)
+    except Exception as e:
+        print('Download dos metadados do tipo "'+type+'" nao realizado: '+str(e))
+        meta_file = os.listdir(dir_metadata)[0]  # only file name
+        meta_file = dir_metadata+"\\" + meta_file
+
+    # dataframePandas
+    if type == 'flow':
+        df_meta = load.metadata_ana_flow(file=meta_file)
+    else:
+        df_meta = load.metadata_ana_prec(file=meta_file)
+
+    # filtra estações cuja SubBasin seja igual ao código do parametro
+    # ex: 75 -> Bacia Uruguai
+    list_stations = df_meta.loc[df_meta['SubBasin'] == subBasinCod]
+
+    # separa os códigos das estações
+    stations_code = list_stations.loc[:, "CodEstacao"]
+
+    if list_stations.empty:
+        print("Nenhuma estação encontrada para o código de bacia digitado+("+type+")\nAbortando programa")
+        return
+
+    stations_code = list(stations_code)
+
+    mkdir_del(dir)
+
+    try:
+        download_data(stations_code=stations_code, path=current_path + '\\' + dir, type=type)
+    except Exception as e:
+        print("Dados das estações não realizado. Motivo: "+str(e))
 
 
 def mkdir_del(path: str):
@@ -209,21 +306,7 @@ def mkdir_del(path: str):
         print("Pre existing files in directory have been deleted")
 
 
-def download_prec_data(stations_code: list, path: str):
-    """
-    Downloads all precipitaiton information from the stations specified
-
-    Each stations data is saved in individual .txt files
-
-    :param stations_code: list
-    :param path: string with path to store files
-    """
-    for i in range(len(stations_code)):
-        file_prec = download.ana_prec(code=stations_code[i], folder=path)
-        print('Arquivo salvo em: {}'. format(file_prec))
-
-
-def download_flow_data(stations_code: list, path: str):
+def download_data(stations_code: list, path: str, type:str):
     """
     Downloads all flow information from the stations
     specified.
@@ -232,10 +315,18 @@ def download_flow_data(stations_code: list, path: str):
 
     :param stations_code: list
     :param path: string with path to store files
+    :param type: 'flow' or 'prec' (precipitation)
     """
+    if type != 'flow' and type != 'prec':
+        raise Exception("Type not supported")
+
     for i in range(len(stations_code)):
-        file_flow = download.ana_flow(code=stations_code[i], folder=path)
-        print('Arquivo salvo em: {}'.format(file_flow))
+        if type=='flow':
+            file = download.ana_flow(code=stations_code[i], folder=path)
+        elif type =='prec':
+            file = download.ana_prec(code=stations_code[i], folder=path)
+
+        print('Arquivo salvo em: {}'.format(file))
 
 
 if __name__ == '__main__':
