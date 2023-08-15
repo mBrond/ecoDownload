@@ -6,8 +6,11 @@ import getDatas as gdt
 def main():
     subBasinCode = 75 # Rio Uruguai
 
-    update_dowloaded_data(subBasinCode, 'prec')
-    update_bd(subBasinCode, 'prec')
+    # update_dowloaded_data(subBasinCode, 'prec')
+    # update_bd(subBasinCode, 'prec')
+
+    update_dowloaded_data(subBasinCode, 'flow')
+    update_bd(subBasinCode, 'flow')
 
     # try:
     #     update_prec_downloaded_data(subBasinCode)
@@ -243,7 +246,6 @@ def update_flow_downloaded_data(subBasinCode: int):
         print(e)
 
 
-
 def update_dowloaded_data(subBasinCod: int, type: str):
     if type != 'flow' and type != 'prec':
         raise Exception("Type not supported")
@@ -252,7 +254,9 @@ def update_dowloaded_data(subBasinCod: int, type: str):
     dir_metadata = current_path + "\\metadata\\meta_"+type
     dir = type+'_files'
 
-    # mkdir_del(dir_metadata)
+
+    mkdir_del(dir_metadata)
+
     try:
         if type == 'flow':
             meta_file = download.metadata_ana_flow(folder=dir_metadata)
@@ -327,6 +331,7 @@ def download_data(stations_code: list, path: str, type:str):
             file = download.ana_prec(code=stations_code[i], folder=path)
 
         print('Arquivo salvo em: {}'.format(file))
+
 
 
 if __name__ == '__main__':
