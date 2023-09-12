@@ -129,6 +129,18 @@ def insert_measuresprec(cursor: mysql.connector,db, date: str, codstation: str, 
     cursor.execute(command, values)
     db.commit()
 
+def insert_measuresflow_null(cursor: mysql.connector,db, date: str, codstation: str):
+    command = 'INSERT INTO eco.measuresflow(date, codstation) VALUES(%s, %s)'
+    values = (date, codstation)
+    cursor.execute(command, values)
+    db.commit()
+
+def insert_measuresprec_null(cursor: mysql.connector,db, date: str, codstation: str):
+    command = 'INSERT INTO eco.measuresprec(date, codstation) VALUES(%s, %s)'
+    values = (date, codstation)
+    cursor.execute(command, values)
+    db.commit()
+
 
 def insert_precstations(cursor: mysql.connector, db, codStation: str, name: str, subBasinCod: str, latitude: str, longitude: str):
     command = 'INSERT INTO eco.precstations(codStation, name, subBasinCod, latitude, longitude) VALUES(%s, %s, %s, %s, %s)'

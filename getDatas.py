@@ -56,7 +56,8 @@ def get_flow_stations_info(codStation: str):
 
 def get_stations_info(codStation: str, type: str):
     """
-    Returns dict with name, longitude and latitude given an station code and its type
+    Returns dict with name, longitude and latitude given an station code and its type.
+    Informations are taken from dataframe.
     :param codStation: Station code
     :param type: Only prec (precipitation) or flow
     """
